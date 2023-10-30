@@ -1,5 +1,8 @@
 # awsvault.clj
 
+[![lint - clj](https://github.com/joakimen/awsvault.clj/actions/workflows/lint.yml/badge.svg)](https://github.com/joakimen/awsvault.clj/actions/workflows/lint.yml) [![bb compatible](https://raw.githubusercontent.com/babashka/babashka/master/logo/badge.svg)](https://babashka.org)
+
+
 Provides helpers for working with [aws-vault](https://github.com/99designs/aws-vault) using [babashka](https://github.com/babashka/babashka).
 
 ## Features
