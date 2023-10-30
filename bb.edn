@@ -1,0 +1,3 @@
+{:paths ["src"]
+ :deps {io.github.joakimen/awsvault {:local/root "."}}
+ :bbin/bin {awsvault {:ns-default awsvault.cli}}}
