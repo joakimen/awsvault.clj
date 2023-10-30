@@ -22,7 +22,9 @@ Provides helpers for working with [aws-vault](https://github.com/99designs/aws-v
 
 Using [babashka/bbin](https://github.com/babashka/bbin):
 
-TODO
+```sh
+bbin install io.github.joakimen/awsvault.clj
+```
 
 ## Usage
 
