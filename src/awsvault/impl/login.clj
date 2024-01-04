@@ -5,6 +5,12 @@
             [babashka.process :as p]
             [clojure.string :as str]))
 
+(defn- sh [cmd]
+  (let [{:keys [out err exit]} (apply p/sh cmd)]
+    (if (zero? exit)
+      (str/trim out)
+      (throw (ex-info (str/trim err) {:babashka/exit exit})))))
+
 (defn- get-data-dir [profile]
   (str (fs/path (fs/xdg-data-home) "aws_chrome" profile)))
 
@@ -12,28 +18,31 @@
   (str (fs/path (fs/xdg-cache-home) "aws_chrome" profile)))
 
 (defn- create-login-link [profile]
-  (let [{:keys [out err exit]} (p/sh "aws-vault" "login" profile "--stdout" "--prompt" "osascript")]
-    (if (zero? exit)
-      (str/trim out)
-      (throw (ex-info (str/trim err) {:babashka/exit exit})))))
+  (sh ["aws-vault" "login" profile "--stdout" "--prompt" "osascript"]))
+
+(defn- err-exit [msg]
+  (throw (ex-info msg {:babashka/exit 1})))
+
+(defn- create-chrome-command [chrome-path profile]
+  (let [user-data-dir (get-data-dir profile)
+        disk-cache-dir (get-cache-dir profile)
+        aws-login-url (create-login-link profile)]
+    [chrome-path
+     "--no-first-run"
+     "--start-maximized"
+     (str "--user-data-dir=" user-data-dir)
+     (str "--disk-cache-dir=" disk-cache-dir)
+     aws-login-url]))
 
 (defn login-profile [profile]
 
   (let [chrome-path  (get-property :google-chrome-path)]
 
     (when-not (fs/executable? chrome-path)
-      (throw (ex-info (str "couldn't find chrome executable at expected path: " chrome-path) {:babashka/exit 1})))
+      (err-exit (str "couldn't find chrome executable at expected path: " chrome-path)))
 
     (when-not (fs/which "aws-vault")
-      (throw (ex-info "aws-vault is not installed" {:babashka/exit 1})))
+      (err-exit "aws-vault is not installed"))
 
-    (let [user-data-dir (get-data-dir profile)
-          disk-cache-dir (get-cache-dir profile)
-          aws-login-url (create-login-link profile)]
-
-      (p/process chrome-path
-                 "--no-first-run"
-                 "--start-maximized"
-                 (str "--user-data-dir=" user-data-dir)
-                 (str "--disk-cache-dir=" disk-cache-dir)
-                 aws-login-url))))
+    (let [chrome-command (create-chrome-command chrome-path profile)]
+      (apply p/process chrome-command))))

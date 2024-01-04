@@ -1,10 +1,20 @@
 (ns awsvault.impl.list
-  (:require [babashka.fs :as fs]))
+  (:require [babashka.fs :as fs]
+            [clojure.string :as str]))
 
-(defn list-profiles []
-  (let [aws-config-file (str (fs/path (fs/home) ".aws" "config"))
-        aws-config (fs/read-all-lines aws-config-file)
-        pat #"\[profile ([a-zA-Z0-9\-]+)"]
-    (->> aws-config
-         (map #(second (re-find pat %)))
+(defn read-aws-config []
+  (fs/read-all-lines (fs/path (fs/home) ".aws" "config")))
+
+(defn parse-aws-config [config]
+  (let [pat #"\[profile ([a-zA-Z0-9\-]+)"]
+    (->> (map #(second (re-find pat %)) config)
          (filter seq))))
+
+(defn profile-contains-patterns? [profile patterns]
+  (some #(when (str/includes? profile %) profile) (str/split patterns #",")))
+
+(defn list-profiles [{:keys [pattern]}]
+  (let [config (read-aws-config)
+        profiles (parse-aws-config config)]
+    (cond->> profiles
+      pattern (filter #(profile-contains-patterns? % pattern)))))
