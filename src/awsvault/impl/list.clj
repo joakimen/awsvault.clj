@@ -16,5 +16,8 @@
 (defn list-profiles [{:keys [pattern]}]
   (let [config (read-aws-config)
         profiles (parse-aws-config config)]
-    (cond->> profiles
-      pattern (filter #(profile-contains-patterns? % pattern)))))
+    (when-let [profiles (cond->> profiles
+                          pattern (filter #(profile-contains-patterns? % pattern)))]
+      (if (seq profiles)
+        profiles
+        (throw (ex-info "No profiles found" {:babashka/exit 1}))))))
