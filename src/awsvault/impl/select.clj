@@ -4,4 +4,4 @@
 
 (defn select-profile [profiles]
   (or (fzf profiles)
-      (throw (ex-info "no profile selected" {:babashka/exit 1}))))
+      (throw (ex-info "No profile selected." {:babashka/exit 1}))))
